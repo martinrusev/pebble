@@ -1,0 +1,22 @@
+FROM golang:1.15-alpine as builder
+
+ENV GOPATH /go
+ENV CGO_ENABLED 0
+ENV GO111MODULE on
+
+ADD . /go/src/github.com/pebble
+WORKDIR /go/src/github.com/pebble
+
+RUN \
+     go install -v -ldflags "-X 'app/build.Time=$(date)'" -gcflags "all=-N -l" -v "github.com/canonical/pebble/cmd/pebble"
+
+
+FROM ubuntu:20.04
+
+COPY --from=builder /go/bin/pebble /usr/bin/pebble
+
+VOLUME ["/data"]
+
+ENV PEBBLE="/data"
+
+CMD ["pebble", "run", "--hold"]
